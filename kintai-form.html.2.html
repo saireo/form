@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>欠勤・遅刻/休暇フォーム</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; background: #f4f5f7; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 100%; max-width: 520px; overflow: hidden; }
+  .header { background: #1264a3; color: #fff; padding: 20px 24px; }
+  .header h1 { font-size: 18px; font-weight: 700; line-height: 1.4; }
+  .header p { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+  .form-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: #1d1c1d; margin-bottom: 6px; }
+  .field label .sub { font-weight: 400; color: #616061; font-size: 12px; margin-left: 4px; }
+  .field label .required { color: #e01e5a; margin-left: 2px; }
+  .field input[type=text], .field input[type=date], .field select, .field textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; font-family: inherit; color: #1d1c1d; background: #fff; transition: border-color 0.15s; appearance: none; -webkit-appearance: none; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23616061' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #1264a3; box-shadow: 0 0 0 3px rgba(18,100,163,0.15); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 4px 0; }
+  .type-selector { display: flex; border-radius: 8px; overflow: hidden; border: 2px solid #1264a3; }
+  .type-btn { flex: 1; padding: 10px 6px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: #fff; color: #1264a3; font-family: inherit; transition: all 0.15s; }
+  .type-btn.active { background: #1264a3; color: #fff; }
+  .type-btn:not(:last-child) { border-right: 1px solid #1264a3; }
+  .submit-btn { width: 100%; padding: 14px; background: #1264a3; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-top: 4px; }
+  .submit-btn:hover { background: #0f4f85; }
+  .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+  #success { display: none; padding: 48px 24px; text-align: center; }
+  #success .icon { font-size: 48px; margin-bottom: 16px; }
+  #success h2 { font-size: 20px; font-weight: 700; color: #1d1c1d; margin-bottom: 8px; }
+  #success p { font-size: 14px; color: #616061; line-height: 1.6; }
+  #success .reset-btn { margin-top: 24px; padding: 10px 24px; background: #f4f5f7; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  #error-msg { display: none; background: #fdf0f3; border: 1px solid #e01e5a; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #c0143c; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>欠勤・遅刻/休暇フォーム</h1>
+    <p>Absence / Late arrival / Holiday</p>
+  </div>
+  <div id="form-section">
+    <form class="form-body" id="mainForm">
+
+      <div class="field">
+        <label>種別 / Type<span class="required">*</span></label>
+        <div class="type-selector">
+          <button type="button" class="type-btn active" id="btn-absent" onclick="selectType('absent')">欠勤 / Absence</button>
+          <button type="button" class="type-btn" id="btn-late" onclick="selectType('late')">遅刻 / Late arrival</button>
+          <button type="button" class="type-btn" id="btn-holiday" onclick="selectType('holiday')">休暇 / Holiday</button>
+        </div>
+        <input type="hidden" id="absence_type" value="欠勤 / Absence">
+      </div>
+
+      <div class="field">
+        <label>名前 / Name<span class="required">*</span></label>
+        <input type="text" id="name" placeholder="例：齋藤 怜央" required>
+      </div>
+
+      <div class="field">
+        <label>ログインID / Login ID<span class="required">*</span></label>
+        <input type="text" id="login_id" placeholder="例：saireo" required>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>勤務時間 / Working hours<span class="required">*</span></label>
+        <input type="text" id="working_hours" placeholder="例：8:00-19:00" required>
+      </div>
+
+      <div class="field">
+        <label>申請日 / Date<span class="required">*</span></label>
+        <input type="date" id="date" required>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>理由 / Reason<span class="required">*</span></label>
+        <select id="reason_type" required>
+          <option value="">選択 / Select</option>
+          <option>体調不良 / Feeling unwell</option>
+          <option>家族の体調不良 / Family illness</option>
+          <option>通院 / Medical appointment</option>
+          <option>冠婚葬祭 / Ceremonial occasion</option>
+          <option>その他 / Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>詳細 / Details<span class="sub">（任意 / Optional）</span></label>
+        <textarea id="reason_detail" placeholder="例：微熱のため。37.5度。"></textarea>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>有給・PL申請/振替希望 / Paid leave / PL request<span class="required">*</span></label>
+        <select id="pl_request" required>
+          <option value="">選択 / Select</option>
+          <option>なし / No request</option>
+          <option>有休希望 / Request paid leave</option>
+          <option>PL希望 / Request PL</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>電話連絡済みか / Phone call made?<span class="required">*</span></label>
+        <select id="called" required>
+          <option value="">選択 / Select</option>
+          <option>なし / N/A</option>
+          <option>はい / Yes</option>
+          <option>いいえ、今から電話します / No, I will do it right now</option>
+        </select>
+      </div>
+
+      <div id="error-msg"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">送信する / Submit</button>
+    </form>
+  </div>
+
+  <div id="success">
+    <div class="icon">✅</div>
+    <h2>送信完了 / Submitted</h2>
+    <p>欠勤・遅刻/休暇連絡をSlackへ送信しました。<br>お大事に。/ Take care.</p>
+    <button class="reset-btn" onclick="resetForm()">続けて入力する / Submit another</button>
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = "https://hooks.slack.com/triggers/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";
+
+  const _t = new Date(); _t.setMinutes(_t.getMinutes() - _t.getTimezoneOffset()); document.getElementById("date").valueAsDate = _t;
+
+  function selectType(type) {
+    document.getElementById("btn-absent").classList.remove("active");
+    document.getElementById("btn-late").classList.remove("active");
+    document.getElementById("btn-holiday").classList.remove("active");
+    const map = { absent: ["btn-absent", "欠勤 / Absence"], late: ["btn-late", "遅刻 / Late arrival"], holiday: ["btn-holiday", "休暇 / Holiday"] };
+    document.getElementById(map[type][0]).classList.add("active");
+    document.getElementById("absence_type").value = map[type][1];
+  }
+
+  document.getElementById("mainForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const errEl = document.getElementById("error-msg");
+    errEl.style.display = "none";
+
+    const dateVal = document.getElementById("date").value;
+    const d = new Date(dateVal);
+    const formatted_date = (d.getMonth()+1) + "/" + d.getDate();
+
+    const reason_type = document.getElementById("reason_type").value;
+    const reason_detail = document.getElementById("reason_detail").value.trim();
+    const reason = reason_detail ? reason_type + "\n" + reason_detail : reason_type;
+
+    const payload = {
+      name: document.getElementById("name").value.trim(),
+      login_id: document.getElementById("login_id").value.trim(),
+      working_hours: document.getElementById("working_hours").value.trim(),
+      contract_type: document.getElementById("absence_type").value,
+      date: formatted_date,
+      reason: reason,
+      pl_request: document.getElementById("pl_request").value,
+      called: document.getElementById("called").value
+    };
+
+    btn.disabled = true;
+    btn.textContent = "送信中... / Sending...";
+
+    try {
+      await fetch(WEBHOOK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+      document.getElementById("form-section").style.display = "none";
+      document.getElementById("success").style.display = "block";
+    } catch(err) {
+      errEl.textContent = "送信に失敗しました。ネットワーク接続を確認してください。/ Failed to send. Please check your network connection.";
+      errEl.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "送信する / Submit";
+    }
+  });
+
+  function resetForm() {
+    document.getElementById("mainForm").reset();
+    const _t = new Date(); _t.setMinutes(_t.getMinutes() - _t.getTimezoneOffset()); document.getElementById("date").valueAsDate = _t;
+    selectType("absent");
+    document.getElementById("form-section").style.display = "block";
+    document.getElementById("success").style.display = "none";
+  }
+</script>
+</body>
+</html>
