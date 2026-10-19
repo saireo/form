@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>欠勤・遅刻連絡フォーム</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f5f7; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 100%; max-width: 520px; overflow: hidden; }
+  .header { background: #1264a3; color: #fff; padding: 20px 24px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .form-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: #1d1c1d; margin-bottom: 6px; }
+  .field label .sub { font-weight: 400; color: #616061; font-size: 12px; margin-left: 4px; }
+  .field label .required { color: #e01e5a; margin-left: 2px; }
+  .field input, .field select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; font-family: inherit; color: #1d1c1d; background: #fff; appearance: none; -webkit-appearance: none; transition: border-color .15s; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23616061' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  .field input:focus, .field select:focus { outline: none; border-color: #1264a3; box-shadow: 0 0 0 3px rgba(18,100,163,0.15); }
+  .hint { font-size: 12px; color: #616061; margin-top: 4px; }
+  .divider { border: none; border-top: 1px solid #f0f0f0; }
+  .badge-row { display: flex; gap: 8px; }
+  .badge-btn { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; color: #616061; transition: all .15s; }
+  .badge-btn.selected-absence { border-color: #e01e5a; background: #fdf0f3; color: #c0143c; }
+  .badge-btn.selected-late { border-color: #f4a100; background: #fffbf0; color: #bf7900; }
+  .slide-in { animation: slideIn .2s ease; }
+  @keyframes slideIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
+  .submit-btn { width: 100%; padding: 14px; background: #1264a3; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; }
+  .submit-btn:hover { background: #0f4f85; }
+  .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+  #success { display: none; padding: 48px 24px; text-align: center; }
+  #success .icon { font-size: 48px; margin-bottom: 16px; }
+  #success h2 { font-size: 20px; font-weight: 700; color: #1d1c1d; margin-bottom: 8px; }
+  #success p { font-size: 14px; color: #616061; line-height: 1.6; }
+  #success .reset-btn { margin-top: 24px; padding: 10px 24px; background: #f4f5f7; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  #error-msg { display: none; background: #fdf0f3; border: 1px solid #e01e5a; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #c0143c; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header"><h1>欠勤・遅刻連絡</h1></div>
+  <div id="form-section">
+    <form class="form-body" id="mainForm">
+
+      <div class="field">
+        <label>会社名<span class="required">*</span></label>
+        <input type="text" id="company" placeholder="会社名を入力" required>
+      </div>
+
+      <div class="field">
+        <label>種別<span class="required">*</span></label>
+        <div class="badge-row">
+          <button type="button" class="badge-btn" id="btn-absence" onclick="selectType('欠勤')">欠勤</button>
+          <button type="button" class="badge-btn" id="btn-late" onclick="selectType('遅刻')">遅刻</button>
+        </div>
+        <input type="hidden" id="type" required>
+      </div>
+
+      <div class="field">
+        <label>日付<span class="required">*</span></label>
+        <input type="date" id="absence_date" required>
+      </div>
+
+      <div class="field">
+        <label>出勤時間<span class="required">*</span><span class="sub">（シフト開始時間）</span></label>
+        <input type="time" id="work_time" required>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>氏名<span class="required">*</span></label>
+        <input type="text" id="name" placeholder="氏名を入力" required>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>遅刻・欠勤理由<span class="required">*</span></label>
+        <select id="reason" required>
+          <option value="">選択してください</option>
+          <option value="体調不良">体調不良 / Feeling unwell</option>
+          <option value="家族の体調不良">家族の体調不良 / Family illness</option>
+          <option value="通院">通院 / Medical appointment</option>
+          <option value="冠婚葬祭">冠婚葬祭 / Ceremonial occasion</option>
+          <option value="渋滞">渋滞 / Traffic jam</option>
+          <option value="その他">その他 / Other</option>
+        </select>
+      </div>
+
+      <div class="field slide-in" id="late_field" style="display:none;">
+        <label>出社予定時刻<span class="required">*</span></label>
+        <input type="time" id="late_arrival_time">
+        <p class="hint">遅刻の場合、何時に出社できるか入力してください</p>
+      </div>
+
+      <div id="error-msg"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">送信する</button>
+    </form>
+  </div>
+
+  <div id="success">
+    <div class="icon">✅</div>
+    <h2>送信完了</h2>
+    <p id="success-detail">Slackへ送信しました。</p>
+    <button class="reset-btn" onclick="resetForm()">続けて入力する</button>
+  </div>
+</div>
+
+<script>
+  // ===== Webhook URL（ここを設定する） =====
+  const WEBHOOK_URL = 'YOUR_WEBHOOK_URL_HERE';
+  // ==========================================
+
+  // 今日の日付をセット
+  const _today = new Date();
+  _today.setMinutes(_today.getMinutes() - _today.getTimezoneOffset());
+  document.getElementById('absence_date').valueAsDate = _today;
+
+  // 種別ボタン
+  function selectType(val) {
+    document.getElementById('type').value = val;
+    const btnAbsence = document.getElementById('btn-absence');
+    const btnLate = document.getElementById('btn-late');
+    const lateField = document.getElementById('late_field');
+    const lateInput = document.getElementById('late_arrival_time');
+
+    btnAbsence.className = 'badge-btn' + (val === '欠勤' ? ' selected-absence' : '');
+    btnLate.className = 'badge-btn' + (val === '遅刻' ? ' selected-late' : '');
+
+    if (val === '遅刻') {
+      lateField.style.display = 'block';
+      lateInput.required = true;
+    } else {
+      lateField.style.display = 'none';
+      lateInput.required = false;
+      lateInput.value = '';
+    }
+  }
+
+  document.getElementById('mainForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const errEl = document.getElementById('error-msg');
+    errEl.style.display = 'none';
+
+    const type = document.getElementById('type').value;
+    if (!type) {
+      errEl.textContent = '種別を選択してください。';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const d = new Date(document.getElementById('absence_date').value);
+    const dateStr = (d.getMonth() + 1) + '/' + d.getDate();
+
+    const payload = {
+      company:           document.getElementById('company').value.trim(),
+      type:              type,
+      absence_date:      dateStr,
+      work_time:         document.getElementById('work_time').value,
+      name:              document.getElementById('name').value.trim(),
+      reason:            document.getElementById('reason').value,
+      late_arrival_time: type === '遅刻' ? document.getElementById('late_arrival_time').value : ''
+    };
+
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    try {
+      await fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+      document.getElementById('form-section').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+      document.getElementById('success-detail').textContent =
+        dateStr + ' ' + payload.name + ' さんの' + type + '連絡を送信しました。';
+    } catch(err) {
+      errEl.textContent = '送信に失敗しました。ネットワーク接続を確認してください。';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '送信する';
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('mainForm').reset();
+    const t = new Date();
+    t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+    document.getElementById('absence_date').valueAsDate = t;
+    document.getElementById('btn-absence').className = 'badge-btn';
+    document.getElementById('btn-late').className = 'badge-btn';
+    document.getElementById('type').value = '';
+    document.getElementById('late_field').style.display = 'none';
+    document.getElementById('late_arrival_time').required = false;
+    document.getElementById('form-section').style.display = 'block';
+    document.getElementById('success').style.display = 'none';
+  }
+</script>
+</body>
+</html>
